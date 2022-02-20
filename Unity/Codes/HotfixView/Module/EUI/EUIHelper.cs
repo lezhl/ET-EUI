@@ -152,8 +152,28 @@ namespace ET
         }
 
         #endregion
-        
-  #region UI按钮事件
+
+        #region UI按钮事件
+        static bool isClicked = false;
+        public static void AddListenerAsync(this Button button, Func<ETTask> action)
+        {
+            button.onClick.RemoveAllListeners();
+
+            async ETTask clickActionAsync()
+            {
+                isClicked = true;
+                await action();
+                isClicked = false;
+            }
+
+            button.onClick.AddListener(() => {
+                if (isClicked)
+                {
+                    return;
+                }
+                clickActionAsync().Coroutine();
+            });
+        }
 
         public static void AddListener(this Toggle toggle, UnityAction<bool> selectEventHandler)
         {

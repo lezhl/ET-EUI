@@ -31,7 +31,7 @@ namespace ET
 
         private static async ETTask TimeOutRemoveKey(this TokenComponent self, long key, string token)
         {
-            await TimerComponent.Instance.WaitAsync(6000000);
+            await TimerComponent.Instance.WaitAsync(600000);
 
             string onlineToken = self.Get(key);
 

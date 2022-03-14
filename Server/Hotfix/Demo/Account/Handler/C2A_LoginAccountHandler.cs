@@ -18,7 +18,7 @@ namespace ET
                 return;
             }
             session.RemoveComponent<SessionAcceptTimeoutComponent>();
-
+             
             if (session.GetComponent<SessionLockingComponent>() != null)
             {
                 response.Error = ErrorCode.ERR_RequestRepeatedly;
@@ -71,6 +71,20 @@ namespace ET
                         account.CreateTime = TimeHelper.ServerNow();
                         account.AccountType = (int)AccountType.Normal;
                         await DBManagerComponent.Instance.GetZoneDB(session.DomainZone()).Save<Account>(account);
+                    }
+
+                    // 发送消息给LoginCenter
+                    StartSceneConfig startSceneConfig = StartSceneConfigCategory.Instance.GetBySceneName(session.DomainZone(), "LoginCenter");
+                    long loginCenterInstanceId = startSceneConfig.InstanceId;
+                    var loginAccountResponse = (L2A_LoginAccountResponse)await ActorMessageSenderComponent.Instance.Call(loginCenterInstanceId, new A2L_LoginAccountRequest() { AccountId = account.Id });
+
+                    if (loginAccountResponse.Error != ErrorCode.ERR_Success)
+                    {
+                        response.Error = loginAccountResponse.Error;
+                        reply();
+                        session?.Disconnect().Coroutine();
+                        account?.Dispose();
+                        return;
                     }
 
                     // 踢掉先登录的玩家
